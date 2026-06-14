@@ -247,20 +247,42 @@
         <p id="board-count" class="rounded-full bg-leaf-50 px-4 py-2 text-base font-black text-leaf-800">게시글 0개</p>
       </div>
 
-      <form id="board-controls-form" class="mt-5 grid gap-3 rounded-lg border border-leaf-100 bg-leaf-50 p-4 lg:grid-cols-[1fr_1fr_auto] lg:items-end">
+      <form id="board-controls-form" class="mt-5 grid gap-3 rounded-lg border border-leaf-100 bg-leaf-50 p-4 lg:grid-cols-[1fr_auto] lg:items-end">
         <label class="block">
           <span class="text-sm font-black text-leaf-900">학급 코드</span>
           <input id="class-code-input" class="mt-2 w-full rounded-lg border-2 border-leaf-200 bg-white px-4 py-3 text-base font-bold text-leaf-950 outline-none transition placeholder:text-slate-400 focus:border-leaf-500 focus:ring-4 focus:ring-leaf-100" maxlength="40" placeholder="예: green-earth-class" />
         </label>
-        <label class="block">
-          <span class="text-sm font-black text-leaf-900">교사용 삭제 코드</span>
-          <input id="teacher-delete-code-input" type="password" autocomplete="off" class="mt-2 w-full rounded-lg border-2 border-leaf-200 bg-white px-4 py-3 text-base font-bold text-leaf-950 outline-none transition placeholder:text-slate-400 focus:border-leaf-500 focus:ring-4 focus:ring-leaf-100" placeholder="삭제할 때만 입력" />
-        </label>
         <button id="apply-class-code-button" type="button" class="inline-flex items-center justify-center rounded-lg border border-leaf-300 bg-white px-4 py-3 text-base font-black text-leaf-800 transition hover:border-leaf-500 hover:bg-leaf-100 focus:outline-none focus:ring-4 focus:ring-leaf-200">
           게시판 불러오기
         </button>
-        <p id="board-storage-status" class="text-sm font-bold leading-6 text-leaf-700 lg:col-span-3" role="status" aria-live="polite"></p>
+        <p id="board-storage-status" class="text-sm font-bold leading-6 text-leaf-700 lg:col-span-2" role="status" aria-live="polite"></p>
       </form>
+
+      <section id="teacher-auth-panel" class="mt-4 rounded-lg border border-leaf-100 bg-white p-4 shadow-sm" aria-labelledby="teacher-auth-title">
+        <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h3 id="teacher-auth-title" class="text-lg font-black text-leaf-950">교사용 관리</h3>
+            <p id="teacher-auth-status" class="mt-1 text-sm font-bold text-leaf-700">Firebase 연결을 확인하는 중입니다.</p>
+          </div>
+          <button id="teacher-logout-button" type="button" class="hidden rounded-lg border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-black text-slate-700 transition hover:bg-slate-100 focus:outline-none focus:ring-4 focus:ring-slate-100">
+            로그아웃
+          </button>
+        </div>
+        <form id="teacher-auth-form" class="mt-4 grid gap-3 lg:grid-cols-[1fr_1fr_auto] lg:items-end">
+          <label class="block">
+            <span class="text-sm font-black text-leaf-900">교사 이메일</span>
+            <input id="teacher-email-input" type="email" autocomplete="username" class="mt-2 w-full rounded-lg border-2 border-leaf-200 bg-white px-4 py-3 text-base font-bold text-leaf-950 outline-none transition placeholder:text-slate-400 focus:border-leaf-500 focus:ring-4 focus:ring-leaf-100" placeholder="teacher@digital-eco-news.local" />
+          </label>
+          <label class="block">
+            <span class="text-sm font-black text-leaf-900">비밀번호</span>
+            <input id="teacher-password-input" type="password" autocomplete="current-password" class="mt-2 w-full rounded-lg border-2 border-leaf-200 bg-white px-4 py-3 text-base font-bold text-leaf-950 outline-none transition placeholder:text-slate-400 focus:border-leaf-500 focus:ring-4 focus:ring-leaf-100" placeholder="교사용 비밀번호" />
+          </label>
+          <button id="teacher-login-button" type="submit" class="inline-flex items-center justify-center rounded-lg bg-leaf-700 px-4 py-3 text-base font-black text-white transition hover:bg-leaf-800 focus:outline-none focus:ring-4 focus:ring-leaf-200">
+            교사 로그인
+          </button>
+        </form>
+        <p id="teacher-auth-message" class="mt-3 min-h-6 text-sm font-bold text-leaf-700" role="status" aria-live="polite"></p>
+      </section>
 
       <div id="empty-board" class="mt-6 rounded-lg border-2 border-dashed border-leaf-200 bg-leaf-50 p-8 text-center">
         <p class="text-xl font-black text-leaf-950">아직 발행된 뉴스가 없습니다.</p>
@@ -287,7 +309,8 @@
 
     window.ECO_NEWS_BOARD_OPTIONS = {
       defaultClassCode: "green-earth-class",
-      teacherDeleteCode: ""
+      teacherEmails: ["teacher@digital-eco-news.local"],
+      teacherUids: ["YgmdJI5bqXMOjIxQ1prGtwbmML53"]
     };
   </script>
 
@@ -490,9 +513,15 @@
     const boardCount = document.getElementById("board-count");
     const boardControlsForm = document.getElementById("board-controls-form");
     const classCodeInput = document.getElementById("class-code-input");
-    const teacherDeleteCodeInput = document.getElementById("teacher-delete-code-input");
     const applyClassCodeButton = document.getElementById("apply-class-code-button");
     const boardStorageStatus = document.getElementById("board-storage-status");
+    const teacherAuthForm = document.getElementById("teacher-auth-form");
+    const teacherEmailInput = document.getElementById("teacher-email-input");
+    const teacherPasswordInput = document.getElementById("teacher-password-input");
+    const teacherLoginButton = document.getElementById("teacher-login-button");
+    const teacherLogoutButton = document.getElementById("teacher-logout-button");
+    const teacherAuthStatus = document.getElementById("teacher-auth-status");
+    const teacherAuthMessage = document.getElementById("teacher-auth-message");
 
     const preview = {
       date: document.getElementById("preview-date"),
@@ -545,6 +574,13 @@
         .slice(0, 40);
       return normalized || fallback;
     }
+
+    function normalizeEmail(value) {
+      return String(value || "").trim().toLowerCase();
+    }
+
+    const teacherEmailAllowlist = new Set((window.ECO_NEWS_BOARD_OPTIONS?.teacherEmails || []).map(normalizeEmail));
+    const teacherUidAllowlist = new Set((window.ECO_NEWS_BOARD_OPTIONS?.teacherUids || []).map(String));
 
     function getSavedClassCode() {
       return normalizeClassCode(localStorage.getItem(CLASS_CODE_STORAGE_KEY));
@@ -656,10 +692,90 @@
       };
     }
 
+    let activeClassCode = getSavedClassCode();
+    let boardStore = createLocalBoardStore();
+    let unsubscribeBoard = () => {};
+    let currentBoardPosts = [];
+    let teacherAuthService = {
+      mode: "unavailable",
+      currentUser: null,
+      async signIn() {
+        throw new Error("Firebase Auth가 아직 준비되지 않았습니다.");
+      },
+      async signOut() {}
+    };
+
+    function isTeacherAuthorized(user = teacherAuthService.currentUser) {
+      if (!user) return false;
+      return teacherUidAllowlist.has(user.uid) || teacherEmailAllowlist.has(normalizeEmail(user.email));
+    }
+
+    function setTeacherAuthMessage(text = "", tone = "default") {
+      const toneClasses = {
+        default: "text-leaf-700",
+        success: "text-leaf-800",
+        warn: "text-amber-800",
+        error: "text-red-700"
+      };
+      teacherAuthMessage.className = `mt-3 min-h-6 text-sm font-bold ${toneClasses[tone] || toneClasses.default}`;
+      teacherAuthMessage.textContent = text;
+    }
+
+    function renderTeacherAuth() {
+      const user = teacherAuthService.currentUser;
+      const isReady = teacherAuthService.mode === "firebase";
+      const isAuthorized = isTeacherAuthorized(user);
+
+      teacherAuthForm.classList.toggle("hidden", !isReady || Boolean(user));
+      teacherLogoutButton.classList.toggle("hidden", !isReady || !user);
+      teacherLoginButton.disabled = !isReady;
+
+      if (!isReady) {
+        teacherAuthStatus.textContent = "Firebase 공유 게시판에서만 교사용 관리가 켜집니다.";
+        setTeacherAuthMessage("Firebase 설정을 확인하는 중입니다.", "warn");
+        return;
+      }
+
+      if (!user) {
+        teacherAuthStatus.textContent = "교사 로그인 후 게시글 삭제가 가능합니다.";
+        setTeacherAuthMessage("");
+        return;
+      }
+
+      if (isAuthorized) {
+        teacherAuthStatus.textContent = `${user.email} 계정으로 관리 중입니다.`;
+        setTeacherAuthMessage("교사용 삭제 권한이 활성화되었습니다.", "success");
+      } else {
+        teacherAuthStatus.textContent = `${user.email || "로그인 계정"} 계정은 삭제 권한이 없습니다.`;
+        setTeacherAuthMessage("등록된 교사 계정으로 다시 로그인해 주세요.", "error");
+      }
+    }
+
+    function configureTeacherAuth(auth, authModule) {
+      const { onAuthStateChanged, signInWithEmailAndPassword, signOut } = authModule;
+      teacherAuthService = {
+        mode: "firebase",
+        currentUser: auth.currentUser,
+        signIn(email, password) {
+          return signInWithEmailAndPassword(auth, email, password);
+        },
+        signOut() {
+          return signOut(auth);
+        }
+      };
+      onAuthStateChanged(auth, (user) => {
+        teacherAuthService.currentUser = user;
+        renderTeacherAuth();
+        renderBoard(currentBoardPosts);
+      });
+      renderTeacherAuth();
+    }
+
     async function createFirestoreBoardStore(config) {
-      const [{ initializeApp }, firestore] = await Promise.all([
+      const [{ initializeApp }, firestore, authModule] = await Promise.all([
         import("https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js"),
-        import("https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js")
+        import("https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js"),
+        import("https://www.gstatic.com/firebasejs/12.14.0/firebase-auth.js")
       ]);
       const {
         getFirestore,
@@ -673,8 +789,11 @@
         onSnapshot,
         serverTimestamp
       } = firestore;
+      const { getAuth } = authModule;
       const app = initializeApp(config);
       const db = getFirestore(app);
+      const auth = getAuth(app);
+      configureTeacherAuth(auth, authModule);
 
       function reportsCollection(classCode) {
         return collection(db, "classes", normalizeClassCode(classCode), "reports");
@@ -791,12 +910,10 @@
       };
     }
 
-    let activeClassCode = getSavedClassCode();
-    let boardStore = createLocalBoardStore();
-    let unsubscribeBoard = () => {};
-
     function renderBoard(posts = []) {
       const sortedPosts = sortPosts(posts.map(sanitizePost));
+      currentBoardPosts = sortedPosts;
+      const canManagePosts = isTeacherAuthorized();
       boardList.innerHTML = "";
       emptyBoard.classList.toggle("hidden", sortedPosts.length > 0);
       boardCount.textContent = `게시글 ${sortedPosts.length}개`;
@@ -818,9 +935,9 @@
             <h3 class="mt-3 text-xl font-black leading-tight text-leaf-950"></h3>
             <p class="mt-1 text-sm font-bold text-leaf-700"></p>
             <p class="mt-3 line-clamp-5 whitespace-pre-wrap text-sm leading-6 text-slate-700"></p>
-            <button type="button" class="delete-button mt-4 inline-flex w-full items-center justify-center rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm font-black text-red-700 transition hover:bg-red-100 focus:outline-none focus:ring-4 focus:ring-red-100">
+            ${canManagePosts ? `<button type="button" class="delete-button mt-4 inline-flex w-full items-center justify-center rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm font-black text-red-700 transition hover:bg-red-100 focus:outline-none focus:ring-4 focus:ring-red-100">
               교사용 삭제
-            </button>
+            </button>` : ""}
           </div>
         `;
 
@@ -830,7 +947,10 @@
         article.querySelector("h3").textContent = post.headline;
         article.querySelector("p:nth-of-type(1)").textContent = `${post.reporter} 작성`;
         article.querySelector("p:nth-of-type(2)").textContent = post.body;
-        article.querySelector(".delete-button").dataset.delete = post.id;
+        const deleteButton = article.querySelector(".delete-button");
+        if (deleteButton) {
+          deleteButton.dataset.delete = post.id;
+        }
         boardList.appendChild(article);
       });
     }
@@ -881,15 +1001,13 @@
     }
 
     function hasTeacherDeleteAccess() {
-      const requiredCode = window.ECO_NEWS_BOARD_OPTIONS?.teacherDeleteCode || "";
-      if (!requiredCode) return true;
-      return teacherDeleteCodeInput.value.trim() === requiredCode;
+      return isTeacherAuthorized();
     }
 
     async function deletePost(id) {
       if (!hasTeacherDeleteAccess()) {
         message.className = "mt-4 min-h-7 rounded-lg bg-amber-50 px-3 py-2 text-base font-bold text-amber-800";
-        message.textContent = "교사용 삭제 코드를 확인해 주세요.";
+        message.textContent = "교사 로그인 후 삭제할 수 있습니다.";
         return;
       }
 
@@ -907,6 +1025,35 @@
       form.addEventListener("input", updatePreview);
       form.addEventListener("change", updatePreview);
       form.addEventListener("submit", publishPost);
+      teacherAuthForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const email = normalizeEmail(teacherEmailInput.value);
+        const password = teacherPasswordInput.value;
+        if (!email || !password) {
+          setTeacherAuthMessage("교사 이메일과 비밀번호를 입력해 주세요.", "warn");
+          return;
+        }
+
+        teacherLoginButton.disabled = true;
+        setTeacherAuthMessage("교사 계정으로 로그인 중입니다...");
+        try {
+          await teacherAuthService.signIn(email, password);
+          teacherPasswordInput.value = "";
+        } catch (error) {
+          setTeacherAuthMessage("교사 이메일 또는 비밀번호를 확인해 주세요.", "error");
+        } finally {
+          teacherLoginButton.disabled = false;
+        }
+      });
+
+      teacherLogoutButton.addEventListener("click", async () => {
+        setTeacherAuthMessage("로그아웃 중입니다...");
+        try {
+          await teacherAuthService.signOut();
+        } catch (error) {
+          setTeacherAuthMessage("로그아웃을 완료하지 못했습니다.", "error");
+        }
+      });
 
       applyClassCodeButton.addEventListener("click", () => {
         connectBoard(classCodeInput.value);
@@ -945,6 +1092,8 @@
       const firebaseConfig = window.ECO_NEWS_FIREBASE_CONFIG || {};
       if (!isFirebaseConfigured(firebaseConfig)) {
         boardStore = createLocalBoardStore();
+        teacherAuthService = { ...teacherAuthService, mode: "unavailable", currentUser: null };
+        renderTeacherAuth();
         await connectBoard(activeClassCode);
         return;
       }
@@ -954,6 +1103,8 @@
         await connectBoard(activeClassCode);
       } catch (error) {
         boardStore = createLocalBoardStore();
+        teacherAuthService = { ...teacherAuthService, mode: "unavailable", currentUser: null };
+        renderTeacherAuth();
         setStatus(`Firebase 연결 실패로 브라우저 데모 모드로 전환했습니다: ${error.message}`, "error");
         await connectBoard(activeClassCode);
       }
@@ -963,6 +1114,7 @@
     renderPresetButtons();
     wireEvents();
     updatePreview();
+    renderTeacherAuth();
     await initializeBoardStore();
   </script>
 </body>

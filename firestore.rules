@@ -2,6 +2,11 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
+    function isTeacher() {
+      return request.auth != null &&
+        request.auth.uid in ["YgmdJI5bqXMOjIxQ1prGtwbmML53"];
+    }
+
     function hasValidReportShape(classCode) {
       return request.resource.data.keys().hasAll([
         "themeId",
@@ -67,7 +72,7 @@ service cloud.firestore {
       allow read: if true;
       allow create: if hasValidReportShape(classCode);
       allow update: if false;
-      allow delete: if true;
+      allow delete: if isTeacher();
     }
   }
 }

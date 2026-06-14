@@ -19,7 +19,7 @@
 - 컬렉션 경로: `classes/{classCode}/reports`
 - 실시간 조회: Firestore `onSnapshot()` 구독
 - 발행: Firestore `addDoc()`
-- 삭제: 1차 구현은 교사용 삭제 코드 UI로 제한하고, 운영 보안은 Firebase Auth 또는 Cloud Functions로 강화
+- 삭제: Firebase Auth 교사 로그인 후 등록된 교사 UID만 허용
 - fallback: Firebase 설정이 비어 있거나 연결 실패 시 기존 `localStorage` 모드로 동작
 
 ## 데이터 모델
@@ -57,10 +57,9 @@
    - Firestore 모드: `onSnapshot(query(... orderBy("createdAt", "desc")))`
    - localStorage 모드: 즉시 렌더링 + 같은 브라우저 저장
 5. 교사용 삭제 흐름
-   - 삭제 버튼 클릭 시 교사용 삭제 코드 확인
-   - 코드가 설정되어 있으면 입력값이 일치할 때만 삭제 허용
-   - 코드가 비어 있으면 기존 데모처럼 삭제 허용
-   - 클라이언트 코드만으로는 강한 보안이 아니므로 운영 단계에서 Auth/Rules 또는 Cloud Functions 강화 필요
+   - 교사용 관리 영역에서 Firebase Auth 이메일/비밀번호 로그인
+   - 로그인한 사용자의 UID가 `firestore.rules`의 교사 UID 목록과 일치할 때만 삭제 버튼 표시
+   - Firestore Rules도 같은 UID 조건으로 삭제를 강제해 클라이언트 우회 삭제를 차단
 6. 검증
    - Firebase 설정 없음: 기존 localStorage 발행/조회/삭제 유지
    - Firebase 설정 있음: 두 브라우저/기기에서 같은 학급 코드로 실시간 동기화 확인
@@ -75,12 +74,17 @@
 
 ## 적용 Rules 요약
 
-현재 `firestore.rules`는 수업 테스트용 출발점이다. 게시글 생성은 필드와 글자 수를 검사하고, 읽기와 삭제는 학급 게시판 운영 편의를 위해 열어 둔다. 장기 운영에는 Firebase Auth 또는 Cloud Functions 기반 권한 검사를 붙이는 것이 좋다.
+현재 `firestore.rules`는 게시글 생성 시 필드와 글자 수를 검사하고, 읽기는 수업 게시판 공유를 위해 허용한다. 삭제는 Firebase Auth로 로그인한 교사 UID만 허용한다.
 
 ```js
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    function isTeacher() {
+      return request.auth != null &&
+        request.auth.uid in ["교사_UID"];
+    }
+
     match /classes/{classCode}/reports/{reportId} {
       allow read: if true;
       allow create: if
@@ -89,17 +93,16 @@ service cloud.firestore {
         request.resource.data.body is string &&
         request.resource.data.classCode == classCode;
       allow update: if false;
-      allow delete: if true;
+      allow delete: if isTeacher();
     }
   }
 }
 ```
 
-교사용 삭제까지 서버에서 안전하게 열려면 다음 중 하나가 필요하다.
+교사 계정을 추가하려면 다음 중 하나가 필요하다.
 
-- Firebase Authentication + 교사용 계정/커스텀 클레임
-- Cloud Functions로 삭제 요청 검증
-- 제한된 교사용 관리 페이지 별도 운영
+- Firebase Auth에 교사 계정 생성 후 `firestore.rules`의 UID 목록에 추가
+- 장기 운영 시 Cloud Functions 또는 커스텀 클레임으로 교사 권한 관리 자동화
 
 ## 참고한 공식 문서
 

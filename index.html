@@ -1,0 +1,671 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>초록 지구 구출 대작전: 우리 반 환경 리포터</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23dcf7e3'/%3E%3Cpath d='M18 39c18 0 27-10 29-25-16 2-29 11-29 25Z' fill='%23116433'/%3E%3Cpath d='M20 43c8-10 16-17 26-25' stroke='%23fff' stroke-width='4' stroke-linecap='round'/%3E%3C/svg%3E" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ["Pretendard", "Apple SD Gothic Neo", "Noto Sans KR", "system-ui", "sans-serif"],
+            serif: ["Georgia", "Apple SD Gothic Neo", "serif"]
+          },
+          colors: {
+            leaf: {
+              50: "#f1fbf4",
+              100: "#dcf7e3",
+              200: "#bbebc9",
+              300: "#85d89f",
+              400: "#48bd70",
+              500: "#219b50",
+              600: "#147d3e",
+              700: "#116433",
+              800: "#11502b",
+              900: "#0f4226"
+            },
+            earth: {
+              50: "#fbf8ef",
+              100: "#f4ecd2",
+              500: "#b7822f",
+              700: "#73501e"
+            }
+          },
+          boxShadow: {
+            paper: "0 24px 60px rgba(18, 80, 43, 0.14)",
+            soft: "0 14px 32px rgba(18, 80, 43, 0.10)"
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    :root {
+      --paper-ink: #173326;
+      --paper-muted: #617267;
+      --paper-rule: #d7e6dc;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      background:
+        radial-gradient(circle at top left, rgba(133, 216, 159, 0.22), transparent 34rem),
+        linear-gradient(180deg, #f1fbf4 0%, #ffffff 46%, #eef8f1 100%);
+    }
+
+    .theme-card {
+      transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease, background 0.18s ease;
+    }
+
+    .theme-card:has(input:checked) {
+      border-color: #219b50;
+      background: #f1fbf4;
+      box-shadow: 0 16px 34px rgba(33, 155, 80, 0.16);
+      transform: translateY(-1px);
+    }
+
+    .theme-card:has(input:focus-visible) {
+      outline: 3px solid rgba(33, 155, 80, 0.28);
+      outline-offset: 3px;
+    }
+
+    .news-paper {
+      color: var(--paper-ink);
+      background:
+        linear-gradient(rgba(255, 255, 255, 0.86), rgba(255, 255, 255, 0.92)),
+        repeating-linear-gradient(0deg, rgba(17, 80, 43, 0.045) 0 1px, transparent 1px 7px);
+    }
+
+    .newspaper-body {
+      white-space: pre-wrap;
+    }
+
+    .board-masonry {
+      column-count: 1;
+      column-gap: 1rem;
+    }
+
+    .board-card {
+      break-inside: avoid;
+      display: inline-block;
+      width: 100%;
+    }
+
+    @media (min-width: 768px) {
+      .board-masonry {
+        column-count: 2;
+      }
+    }
+
+    @media (min-width: 1180px) {
+      .board-masonry {
+        column-count: 3;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .newspaper-body {
+        column-count: 1;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        scroll-behavior: auto !important;
+        transition-duration: 0.01ms !important;
+        animation-duration: 0.01ms !important;
+      }
+    }
+  </style>
+</head>
+<body class="min-h-screen text-leaf-950 antialiased">
+  <header class="border-b border-leaf-200/80 bg-white/80 backdrop-blur">
+    <div class="mx-auto flex max-w-7xl flex-col gap-5 px-4 py-6 sm:px-6 lg:px-8">
+      <div class="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+        <div>
+          <p class="text-sm font-bold tracking-[0.16em] text-leaf-600">디지털 뉴스레터 만들기</p>
+          <h1 class="mt-2 text-3xl font-black leading-tight text-leaf-950 sm:text-4xl lg:text-5xl">
+            초록 지구 구출 대작전: 우리 반 환경 리포터
+          </h1>
+        </div>
+        <a href="#class-board" class="inline-flex w-fit items-center justify-center rounded-lg bg-leaf-600 px-5 py-3 text-base font-bold text-white shadow-soft transition hover:bg-leaf-700 focus:outline-none focus:ring-4 focus:ring-leaf-300">
+          우리 반 게시판 보기
+        </a>
+      </div>
+
+      <section aria-labelledby="standard-title" class="rounded-lg border border-leaf-200 bg-leaf-50 p-4 shadow-sm">
+        <h2 id="standard-title" class="text-lg font-extrabold text-leaf-900">성취기준 안내</h2>
+        <div class="mt-3 grid gap-3 text-sm leading-6 text-leaf-900 md:grid-cols-2">
+          <p><strong>[6과09-04]</strong> 산성화로 인한 환경의 피해 사례를 소개하는 자료를 만들고 공유하기</p>
+          <p><strong>[6사02-01]</strong> 기후변화로 인한 자연재해의 심각성을 이해하고 기후 행동에 참여하기</p>
+        </div>
+      </section>
+    </div>
+  </header>
+
+  <main class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+    <section class="grid gap-6 xl:grid-cols-[minmax(0,0.92fr)_minmax(430px,1.08fr)]" aria-label="환경 뉴스레터 작성 도구">
+      <form id="report-form" class="rounded-lg border border-leaf-200 bg-white p-5 shadow-soft sm:p-6">
+        <div class="flex flex-col gap-2 border-b border-leaf-100 pb-5">
+          <h2 class="text-2xl font-black text-leaf-950">1. 기사 작성하기</h2>
+          <p class="text-base leading-7 text-leaf-700">주제를 고르고, 피해 상황과 우리가 실천할 기후 행동을 뉴스 기사처럼 정리해 보세요.</p>
+        </div>
+
+        <fieldset class="mt-6">
+          <legend class="text-lg font-extrabold text-leaf-950">뉴스 테마 선택</legend>
+          <div id="theme-list" class="mt-3 grid gap-3 sm:grid-cols-2"></div>
+        </fieldset>
+
+        <div class="mt-6 grid gap-5">
+          <label class="block">
+            <span class="text-lg font-extrabold text-leaf-950">기사 제목</span>
+            <input id="headline-input" name="headline" maxlength="72" required class="mt-2 w-full rounded-lg border-2 border-leaf-200 bg-white px-4 py-3 text-lg font-bold text-leaf-950 outline-none transition placeholder:text-slate-400 focus:border-leaf-500 focus:ring-4 focus:ring-leaf-100" placeholder="예: 숲이 보내는 긴급 구조 요청" />
+          </label>
+
+          <label class="block">
+            <span class="text-lg font-extrabold text-leaf-950">기자 이름</span>
+            <input id="reporter-input" name="reporter" maxlength="24" required class="mt-2 w-full rounded-lg border-2 border-leaf-200 bg-white px-4 py-3 text-lg font-bold text-leaf-950 outline-none transition placeholder:text-slate-400 focus:border-leaf-500 focus:ring-4 focus:ring-leaf-100" placeholder="예: 6학년 김초록 기자" />
+          </label>
+
+          <label class="block">
+            <span class="text-lg font-extrabold text-leaf-950">본문 내용</span>
+            <textarea id="body-input" name="body" rows="9" required class="mt-2 w-full resize-y rounded-lg border-2 border-leaf-200 bg-white px-4 py-3 text-lg leading-8 text-leaf-950 outline-none transition placeholder:text-slate-400 focus:border-leaf-500 focus:ring-4 focus:ring-leaf-100" placeholder="피해 상황, 문제점, 우리가 할 수 있는 해결 방안을 함께 써 보세요.&#10;&#10;예: 산성비는 나무와 호수 생물에게 피해를 줄 수 있습니다. 우리는 가까운 거리는 걷고, 에너지를 아끼며, 환경 문제를 주변에 알리겠습니다."></textarea>
+          </label>
+
+          <div class="rounded-lg border border-leaf-100 bg-leaf-50 p-4">
+            <label class="block">
+              <span class="text-lg font-extrabold text-leaf-950">이미지 URL 넣기</span>
+              <input id="image-input" name="image" class="mt-2 w-full rounded-lg border-2 border-leaf-200 bg-white px-4 py-3 text-base text-leaf-950 outline-none transition placeholder:text-slate-400 focus:border-leaf-500 focus:ring-4 focus:ring-leaf-100" placeholder="https://로 시작하는 환경 사진 주소를 넣어도 좋아요" />
+            </label>
+            <div class="mt-4">
+              <p class="text-sm font-bold text-leaf-800">기본 환경 이미지 선택</p>
+              <div id="preset-list" class="mt-2 grid gap-2 sm:grid-cols-2"></div>
+            </div>
+          </div>
+        </div>
+      </form>
+
+      <section class="rounded-lg border border-leaf-200 bg-white p-5 shadow-soft sm:p-6" aria-labelledby="preview-title">
+        <div class="flex flex-col gap-3 border-b border-leaf-100 pb-5 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 id="preview-title" class="text-2xl font-black text-leaf-950">2. 실시간 신문 미리보기</h2>
+            <p class="mt-1 text-base text-leaf-700">왼쪽에 글을 쓰면 바로 신문 1면에 반영됩니다.</p>
+          </div>
+          <button id="publish-button" form="report-form" type="submit" class="inline-flex items-center justify-center rounded-lg bg-leaf-600 px-5 py-3 text-lg font-black text-white shadow-soft transition hover:bg-leaf-700 focus:outline-none focus:ring-4 focus:ring-leaf-300">
+            학급 게시판에 발행하기
+          </button>
+        </div>
+
+        <article class="news-paper mt-6 overflow-hidden rounded-lg border border-slate-300 shadow-paper" aria-label="신문 1면 미리보기">
+          <div class="border-b-4 border-leaf-900 px-5 py-4 text-center">
+            <p id="preview-date" class="text-xs font-bold tracking-[0.22em] text-leaf-700"></p>
+            <p class="mt-1 font-serif text-3xl font-black uppercase tracking-wide text-leaf-950 sm:text-4xl">Green Class Times</p>
+            <p class="mt-2 text-sm font-bold text-leaf-800">우리 반 환경 뉴스레터 특별호</p>
+          </div>
+
+          <div class="grid gap-5 p-5">
+            <div class="flex flex-wrap items-center gap-2">
+              <span id="preview-theme-badge" class="rounded-full bg-leaf-700 px-3 py-1 text-sm font-black text-white">산성비</span>
+              <span id="preview-theme-summary" class="text-sm font-bold text-leaf-700">산성화로 인한 숲과 생물 피해를 취재합니다.</span>
+            </div>
+
+            <h3 id="preview-headline" class="font-serif text-4xl font-black leading-none text-leaf-950 sm:text-5xl">숲이 보내는 긴급 구조 요청</h3>
+
+            <div class="flex flex-wrap items-center justify-between gap-2 border-y border-slate-300 py-2 text-sm font-bold text-leaf-800">
+              <span id="preview-reporter">6학년 환경 기자</span>
+              <span>피해 사례 · 해결 행동 · 공유</span>
+            </div>
+
+            <div class="grid gap-5 lg:grid-cols-[1.08fr_0.92fr]">
+              <figure class="overflow-hidden rounded-md border border-slate-300 bg-leaf-50">
+                <img id="preview-image" alt="환경 뉴스 이미지 미리보기" class="h-64 w-full object-cover sm:h-72 lg:h-full" />
+                <figcaption id="preview-caption" class="border-t border-slate-300 bg-white px-3 py-2 text-xs font-bold text-leaf-700">현장에서 살펴본 환경 피해 모습</figcaption>
+              </figure>
+              <p id="preview-body" class="newspaper-body text-base leading-7 text-leaf-950">
+                산성비는 나무와 호수 생물에게 피해를 줄 수 있습니다. 우리는 가까운 거리는 걷고, 에너지를 아끼며, 환경 문제를 주변에 알리겠습니다.
+              </p>
+            </div>
+          </div>
+        </article>
+
+        <p id="form-message" class="mt-4 min-h-7 rounded-lg px-3 py-2 text-base font-bold text-leaf-800" role="status" aria-live="polite"></p>
+      </section>
+    </section>
+
+    <section id="class-board" class="mt-10 rounded-lg border border-leaf-200 bg-white p-5 shadow-soft sm:p-6" aria-labelledby="board-title">
+      <div class="flex flex-col gap-3 border-b border-leaf-100 pb-5 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <p class="text-sm font-bold tracking-[0.16em] text-leaf-600">Padlet 스타일 공유 공간</p>
+          <h2 id="board-title" class="mt-1 text-3xl font-black text-leaf-950">3. 우리 반 환경 뉴스 게시판</h2>
+        </div>
+        <p id="board-count" class="rounded-full bg-leaf-50 px-4 py-2 text-base font-black text-leaf-800">게시글 0개</p>
+      </div>
+
+      <div id="empty-board" class="mt-6 rounded-lg border-2 border-dashed border-leaf-200 bg-leaf-50 p-8 text-center">
+        <p class="text-xl font-black text-leaf-950">아직 발행된 뉴스가 없습니다.</p>
+        <p class="mt-2 text-base text-leaf-700">첫 번째 환경 리포터가 되어 학급 게시판을 채워 주세요.</p>
+      </div>
+
+      <div id="board-list" class="board-masonry mt-6"></div>
+    </section>
+  </main>
+
+  <footer class="mx-auto max-w-7xl px-4 pb-8 text-center text-sm font-bold text-leaf-700 sm:px-6 lg:px-8">
+    새로고침해도 브라우저 localStorage에 발행한 뉴스가 남아 있습니다.
+  </footer>
+
+  <script>
+    const STORAGE_KEY = "green-class-environment-news-v1";
+
+    const imagePresets = {
+      forest: {
+        label: "산성비와 숲",
+        caption: "산성비로 약해진 숲을 살펴보는 현장 사진",
+        svg: `
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 760">
+            <defs>
+              <linearGradient id="sky" x1="0" x2="0" y1="0" y2="1">
+                <stop stop-color="#dff6ea" offset="0"/>
+                <stop stop-color="#f7fbf3" offset="1"/>
+              </linearGradient>
+              <linearGradient id="hill" x1="0" x2="1" y1="0" y2="1">
+                <stop stop-color="#7ccf92" offset="0"/>
+                <stop stop-color="#1f7a43" offset="1"/>
+              </linearGradient>
+            </defs>
+            <rect width="1200" height="760" fill="url(#sky)"/>
+            <path d="M0 520 C190 420 310 475 445 405 C620 314 786 420 1200 300 L1200 760 L0 760 Z" fill="#bbebc9"/>
+            <path d="M0 575 C210 500 366 568 542 470 C760 350 932 484 1200 415 L1200 760 L0 760 Z" fill="url(#hill)"/>
+            <g opacity="0.9">
+              <path d="M210 620 L250 320 L290 620 Z" fill="#715936"/>
+              <path d="M250 250 C140 350 125 450 250 430 C360 446 380 336 250 250 Z" fill="#1f7a43"/>
+              <path d="M475 638 L512 342 L550 638 Z" fill="#715936"/>
+              <path d="M515 290 C405 390 405 490 514 470 C625 485 655 386 515 290 Z" fill="#2f9657"/>
+              <path d="M765 630 L806 330 L846 630 Z" fill="#715936"/>
+              <path d="M806 255 C685 365 692 470 810 448 C925 468 940 360 806 255 Z" fill="#17683c"/>
+            </g>
+            <g stroke="#4a5f4d" stroke-width="10" stroke-linecap="round" opacity="0.38">
+              <path d="M610 120 C598 178 582 208 552 248"/>
+              <path d="M690 90 C676 152 652 188 620 232"/>
+              <path d="M780 138 C758 182 726 230 704 278"/>
+            </g>
+            <text x="70" y="95" fill="#116433" font-family="Arial, sans-serif" font-size="42" font-weight="800">Forest Report</text>
+          </svg>`
+      },
+      ocean: {
+        label: "바다 산성화",
+        caption: "산성화가 바다 생태계에 미치는 영향을 보여 주는 장면",
+        svg: `
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 760">
+            <defs>
+              <linearGradient id="sea" x1="0" x2="0" y1="0" y2="1">
+                <stop stop-color="#d8fbff" offset="0"/>
+                <stop stop-color="#37abc5" offset="0.62"/>
+                <stop stop-color="#155e75" offset="1"/>
+              </linearGradient>
+            </defs>
+            <rect width="1200" height="760" fill="url(#sea)"/>
+            <path d="M0 245 C160 205 270 282 420 238 C585 190 710 270 860 230 C1010 190 1100 230 1200 205 L1200 760 L0 760 Z" fill="#0e7490" opacity="0.55"/>
+            <g fill="none" stroke="#e0fbff" stroke-width="8" opacity="0.65">
+              <path d="M90 360 C190 310 270 410 370 360 S550 310 650 360 S830 410 930 360 S1080 315 1170 360"/>
+              <path d="M0 495 C95 460 170 540 265 500 S430 458 520 505 S705 545 800 497 S975 455 1085 500"/>
+            </g>
+            <g transform="translate(215 360)">
+              <path d="M0 140 C110 38 210 16 330 75 C240 100 232 220 310 292 C190 340 58 270 0 140 Z" fill="#fef3c7" opacity="0.86"/>
+              <path d="M74 132 C135 80 205 74 266 105" fill="none" stroke="#b7822f" stroke-width="12" stroke-linecap="round"/>
+            </g>
+            <g transform="translate(720 420)" fill="#f8fafc" opacity="0.88">
+              <circle cx="0" cy="0" r="22"/>
+              <circle cx="42" cy="-44" r="15"/>
+              <circle cx="92" cy="-12" r="28"/>
+              <circle cx="140" cy="-74" r="12"/>
+            </g>
+            <text x="70" y="95" fill="#064e5e" font-family="Arial, sans-serif" font-size="42" font-weight="800">Ocean Report</text>
+          </svg>`
+      },
+      rain: {
+        label: "기후변화와 폭우",
+        caption: "기후변화로 강해진 폭우와 마을의 대비 모습",
+        svg: `
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 760">
+            <defs>
+              <linearGradient id="storm" x1="0" x2="0" y1="0" y2="1">
+                <stop stop-color="#dbeafe" offset="0"/>
+                <stop stop-color="#93c5fd" offset="0.48"/>
+                <stop stop-color="#d9f99d" offset="1"/>
+              </linearGradient>
+            </defs>
+            <rect width="1200" height="760" fill="url(#storm)"/>
+            <path d="M0 565 C190 510 335 610 510 535 C720 445 880 535 1200 472 L1200 760 L0 760 Z" fill="#65a30d" opacity="0.66"/>
+            <path d="M0 618 C170 590 290 645 430 607 C620 555 830 628 1200 570 L1200 760 L0 760 Z" fill="#0369a1" opacity="0.42"/>
+            <g fill="#475569" opacity="0.52">
+              <ellipse cx="210" cy="170" rx="150" ry="60"/>
+              <ellipse cx="385" cy="155" rx="210" ry="75"/>
+              <ellipse cx="620" cy="170" rx="165" ry="60"/>
+              <ellipse cx="870" cy="135" rx="195" ry="72"/>
+            </g>
+            <g stroke="#f8fafc" stroke-width="12" stroke-linecap="round" opacity="0.86">
+              <path d="M215 260 L175 348"/>
+              <path d="M350 245 L300 370"/>
+              <path d="M520 255 L468 380"/>
+              <path d="M730 238 L690 355"/>
+              <path d="M905 230 L860 360"/>
+              <path d="M1040 260 L995 380"/>
+            </g>
+            <g transform="translate(235 452)">
+              <path d="M0 130 L120 35 L245 130 Z" fill="#92400e"/>
+              <rect x="38" y="130" width="170" height="115" fill="#fef3c7"/>
+              <rect x="90" y="170" width="52" height="75" fill="#60a5fa"/>
+            </g>
+            <text x="70" y="95" fill="#1e3a8a" font-family="Arial, sans-serif" font-size="42" font-weight="800">Climate Report</text>
+          </svg>`
+      },
+      action: {
+        label: "기후 행동",
+        caption: "함께 실천하는 에너지 절약과 생활 속 기후 행동",
+        svg: `
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 760">
+            <defs>
+              <linearGradient id="morning" x1="0" x2="1" y1="0" y2="1">
+                <stop stop-color="#ecfccb" offset="0"/>
+                <stop stop-color="#dcfce7" offset="0.54"/>
+                <stop stop-color="#bae6fd" offset="1"/>
+              </linearGradient>
+            </defs>
+            <rect width="1200" height="760" fill="url(#morning)"/>
+            <circle cx="995" cy="145" r="88" fill="#fde68a" opacity="0.9"/>
+            <path d="M0 560 C190 498 330 580 510 510 C720 428 892 528 1200 455 L1200 760 L0 760 Z" fill="#86efac"/>
+            <path d="M0 630 C230 575 410 648 635 575 C825 515 1000 590 1200 540 L1200 760 L0 760 Z" fill="#22c55e" opacity="0.72"/>
+            <g transform="translate(285 305)" fill="none" stroke="#116433" stroke-width="18" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M178 228 C105 214 55 158 55 90 C55 50 88 24 128 24 C168 24 204 52 204 95 C204 138 168 172 126 172"/>
+              <path d="M230 230 C304 218 356 162 356 94 C356 53 323 24 283 24 C243 24 207 52 207 95 C207 138 243 172 285 172"/>
+              <path d="M205 176 L205 305"/>
+            </g>
+            <g transform="translate(760 415)">
+              <rect x="0" y="90" width="220" height="54" rx="18" fill="#14532d"/>
+              <circle cx="55" cy="156" r="28" fill="#0f172a"/>
+              <circle cx="165" cy="156" r="28" fill="#0f172a"/>
+              <path d="M30 90 L88 24 H154 L205 90" fill="#bbf7d0"/>
+            </g>
+            <text x="70" y="95" fill="#116433" font-family="Arial, sans-serif" font-size="42" font-weight="800">Action Report</text>
+          </svg>`
+      }
+    };
+
+    const themes = [
+      {
+        id: "acid-rain",
+        title: "산성비와 숲 파괴",
+        short: "산성비",
+        summary: "산성화로 인한 숲과 생물 피해를 취재합니다.",
+        prompt: "산성비가 숲, 토양, 호수에 주는 피해와 줄일 수 있는 행동을 써 보세요.",
+        preset: "forest",
+        color: "green"
+      },
+      {
+        id: "ocean-acid",
+        title: "지구 온난화와 바다 산성화",
+        short: "바다 산성화",
+        summary: "바다 생물과 산호가 겪는 변화를 뉴스로 전합니다.",
+        prompt: "이산화탄소 증가, 바다 산성화, 해양 생태계 피해를 연결해 보세요.",
+        preset: "ocean",
+        color: "cyan"
+      },
+      {
+        id: "climate-rain",
+        title: "기후변화와 폭우",
+        short: "폭우",
+        summary: "기후변화로 심해지는 자연재해와 대비 행동을 다룹니다.",
+        prompt: "폭우 피해와 안전한 마을을 위한 약속을 기사에 담아 보세요.",
+        preset: "rain",
+        color: "blue"
+      },
+      {
+        id: "daily-action",
+        title: "생활 속 기후 행동",
+        short: "기후 행동",
+        summary: "우리 반이 바로 실천할 수 있는 행동을 제안합니다.",
+        prompt: "에너지 절약, 대중교통, 분리배출, 알리기 활동을 기사로 소개해 보세요.",
+        preset: "action",
+        color: "amber"
+      }
+    ];
+
+    const colorClasses = {
+      green: "bg-leaf-700 text-white",
+      cyan: "bg-cyan-700 text-white",
+      blue: "bg-blue-700 text-white",
+      amber: "bg-amber-600 text-white"
+    };
+
+    const form = document.getElementById("report-form");
+    const themeList = document.getElementById("theme-list");
+    const presetList = document.getElementById("preset-list");
+    const headlineInput = document.getElementById("headline-input");
+    const reporterInput = document.getElementById("reporter-input");
+    const bodyInput = document.getElementById("body-input");
+    const imageInput = document.getElementById("image-input");
+    const message = document.getElementById("form-message");
+    const boardList = document.getElementById("board-list");
+    const emptyBoard = document.getElementById("empty-board");
+    const boardCount = document.getElementById("board-count");
+
+    const preview = {
+      date: document.getElementById("preview-date"),
+      badge: document.getElementById("preview-theme-badge"),
+      summary: document.getElementById("preview-theme-summary"),
+      headline: document.getElementById("preview-headline"),
+      reporter: document.getElementById("preview-reporter"),
+      body: document.getElementById("preview-body"),
+      image: document.getElementById("preview-image"),
+      caption: document.getElementById("preview-caption")
+    };
+
+    function svgToDataUri(svg) {
+      return "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(svg.trim());
+    }
+
+    function getPresetUrl(key) {
+      return svgToDataUri(imagePresets[key].svg);
+    }
+
+    function getSelectedTheme() {
+      const selected = document.querySelector("input[name='theme']:checked");
+      return themes.find((theme) => theme.id === selected?.value) || themes[0];
+    }
+
+    function getSafeImageUrl(value, fallbackPreset) {
+      const trimmed = value.trim();
+      if (/^https?:\/\//i.test(trimmed) || trimmed.startsWith("data:image/svg+xml;charset=UTF-8,")) {
+        return trimmed;
+      }
+      return getPresetUrl(fallbackPreset);
+    }
+
+    function formatDate(value = new Date()) {
+      return new Intl.DateTimeFormat("ko-KR", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+        weekday: "short"
+      }).format(value);
+    }
+
+    function loadPosts() {
+      try {
+        return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+      } catch {
+        return [];
+      }
+    }
+
+    function savePosts(posts) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(posts));
+    }
+
+    function renderThemeOptions() {
+      themeList.innerHTML = "";
+      themes.forEach((theme, index) => {
+        const label = document.createElement("label");
+        label.className = "theme-card cursor-pointer rounded-lg border-2 border-leaf-100 bg-white p-4";
+        label.innerHTML = `
+          <input class="sr-only" type="radio" name="theme" value="${theme.id}" ${index === 0 ? "checked" : ""}>
+          <span class="block text-lg font-black text-leaf-950">${theme.title}</span>
+          <span class="mt-2 block text-sm leading-6 text-leaf-700">${theme.prompt}</span>
+        `;
+        themeList.appendChild(label);
+      });
+    }
+
+    function renderPresetButtons() {
+      presetList.innerHTML = "";
+      Object.entries(imagePresets).forEach(([key, preset]) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.dataset.preset = key;
+        button.className = "rounded-lg border border-leaf-200 bg-white px-3 py-3 text-left text-sm font-black text-leaf-900 transition hover:border-leaf-500 hover:bg-leaf-100 focus:outline-none focus:ring-4 focus:ring-leaf-200";
+        button.textContent = preset.label;
+        presetList.appendChild(button);
+      });
+    }
+
+    function updatePreview() {
+      const selectedTheme = getSelectedTheme();
+      const preset = imagePresets[selectedTheme.preset];
+      const headline = headlineInput.value.trim() || "숲이 보내는 긴급 구조 요청";
+      const reporter = reporterInput.value.trim() || "6학년 환경 기자";
+      const body = bodyInput.value.trim() || "산성비는 나무와 호수 생물에게 피해를 줄 수 있습니다. 우리는 가까운 거리는 걷고, 에너지를 아끼며, 환경 문제를 주변에 알리겠습니다.";
+      const imageUrl = getSafeImageUrl(imageInput.value, selectedTheme.preset);
+
+      preview.date.textContent = formatDate();
+      preview.badge.textContent = selectedTheme.short;
+      preview.badge.className = `rounded-full px-3 py-1 text-sm font-black ${colorClasses[selectedTheme.color]}`;
+      preview.summary.textContent = selectedTheme.summary;
+      preview.headline.textContent = headline;
+      preview.reporter.textContent = `${reporter} 작성`;
+      preview.body.textContent = body;
+      preview.image.src = imageUrl;
+      preview.caption.textContent = preset.caption;
+    }
+
+    function createPostFromForm() {
+      const selectedTheme = getSelectedTheme();
+      return {
+        id: window.crypto?.randomUUID ? window.crypto.randomUUID() : String(Date.now()),
+        themeId: selectedTheme.id,
+        themeTitle: selectedTheme.title,
+        themeShort: selectedTheme.short,
+        themeColor: selectedTheme.color,
+        headline: headlineInput.value.trim(),
+        reporter: reporterInput.value.trim(),
+        body: bodyInput.value.trim(),
+        imageUrl: getSafeImageUrl(imageInput.value, selectedTheme.preset),
+        caption: imagePresets[selectedTheme.preset].caption,
+        createdAt: new Date().toISOString()
+      };
+    }
+
+    function renderBoard() {
+      const posts = loadPosts().sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      boardList.innerHTML = "";
+      emptyBoard.classList.toggle("hidden", posts.length > 0);
+      boardCount.textContent = `게시글 ${posts.length}개`;
+
+      posts.forEach((post) => {
+        const article = document.createElement("article");
+        article.className = "board-card mb-4 overflow-hidden rounded-lg border border-leaf-200 bg-white shadow-soft";
+        const image = document.createElement("img");
+        image.className = "h-44 w-full object-cover";
+        image.alt = "";
+        image.src = getSafeImageUrl(post.imageUrl || "", themes.find((theme) => theme.id === post.themeId)?.preset || "forest");
+
+        article.innerHTML = `
+          <div class="p-4">
+            <div class="flex flex-wrap items-center gap-2">
+              <span class="theme-label rounded-full px-3 py-1 text-xs font-black ${colorClasses[post.themeColor] || colorClasses.green}"></span>
+              <time class="post-date text-xs font-bold text-leaf-600"></time>
+            </div>
+            <h3 class="mt-3 text-xl font-black leading-tight text-leaf-950"></h3>
+            <p class="mt-1 text-sm font-bold text-leaf-700"></p>
+            <p class="mt-3 line-clamp-5 whitespace-pre-wrap text-sm leading-6 text-slate-700"></p>
+            <button type="button" class="delete-button mt-4 inline-flex w-full items-center justify-center rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm font-black text-red-700 transition hover:bg-red-100 focus:outline-none focus:ring-4 focus:ring-red-100">
+              삭제
+            </button>
+          </div>
+        `;
+
+        article.prepend(image);
+        article.querySelector(".theme-label").textContent = post.themeShort || "환경 뉴스";
+        article.querySelector(".post-date").textContent = formatDate(new Date(post.createdAt));
+        article.querySelector("h3").textContent = post.headline;
+        article.querySelector("p:nth-of-type(1)").textContent = `${post.reporter} 작성`;
+        article.querySelector("p:nth-of-type(2)").textContent = post.body;
+        article.querySelector(".delete-button").dataset.delete = post.id;
+        boardList.appendChild(article);
+      });
+    }
+
+    function publishPost(event) {
+      event.preventDefault();
+      if (!form.checkValidity()) {
+        form.reportValidity();
+        message.className = "mt-4 min-h-7 rounded-lg bg-amber-50 px-3 py-2 text-base font-bold text-amber-800";
+        message.textContent = "제목, 기자 이름, 본문을 모두 채워 주세요.";
+        return;
+      }
+
+      const posts = loadPosts();
+      const post = createPostFromForm();
+      posts.push(post);
+      savePosts(posts);
+      renderBoard();
+      message.className = "mt-4 min-h-7 rounded-lg bg-leaf-50 px-3 py-2 text-base font-bold text-leaf-800";
+      message.textContent = "학급 게시판에 뉴스가 발행되었습니다.";
+      const boardTop = document.getElementById("class-board").getBoundingClientRect().top + window.scrollY - 18;
+      window.scrollTo({ top: boardTop, behavior: "smooth" });
+    }
+
+    function deletePost(id) {
+      const nextPosts = loadPosts().filter((post) => post.id !== id);
+      savePosts(nextPosts);
+      renderBoard();
+      message.className = "mt-4 min-h-7 rounded-lg bg-slate-50 px-3 py-2 text-base font-bold text-slate-700";
+      message.textContent = "게시판에서 뉴스가 삭제되었습니다.";
+    }
+
+    function wireEvents() {
+      form.addEventListener("input", updatePreview);
+      form.addEventListener("change", updatePreview);
+      form.addEventListener("submit", publishPost);
+
+      presetList.addEventListener("click", (event) => {
+        const button = event.target.closest("[data-preset]");
+        if (!button) return;
+        imageInput.value = getPresetUrl(button.dataset.preset);
+        updatePreview();
+      });
+
+      boardList.addEventListener("click", (event) => {
+        const button = event.target.closest("[data-delete]");
+        if (!button) return;
+        const wantsDelete = confirm("이 뉴스를 게시판에서 삭제할까요?");
+        if (wantsDelete) {
+          deletePost(button.dataset.delete);
+        }
+      });
+    }
+
+    renderThemeOptions();
+    renderPresetButtons();
+    wireEvents();
+    updatePreview();
+    renderBoard();
+  </script>
+</body>
+</html>

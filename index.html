@@ -247,6 +247,21 @@
         <p id="board-count" class="rounded-full bg-leaf-50 px-4 py-2 text-base font-black text-leaf-800">게시글 0개</p>
       </div>
 
+      <form id="board-controls-form" class="mt-5 grid gap-3 rounded-lg border border-leaf-100 bg-leaf-50 p-4 lg:grid-cols-[1fr_1fr_auto] lg:items-end">
+        <label class="block">
+          <span class="text-sm font-black text-leaf-900">학급 코드</span>
+          <input id="class-code-input" class="mt-2 w-full rounded-lg border-2 border-leaf-200 bg-white px-4 py-3 text-base font-bold text-leaf-950 outline-none transition placeholder:text-slate-400 focus:border-leaf-500 focus:ring-4 focus:ring-leaf-100" maxlength="40" placeholder="예: green-earth-class" />
+        </label>
+        <label class="block">
+          <span class="text-sm font-black text-leaf-900">교사용 삭제 코드</span>
+          <input id="teacher-delete-code-input" type="password" autocomplete="off" class="mt-2 w-full rounded-lg border-2 border-leaf-200 bg-white px-4 py-3 text-base font-bold text-leaf-950 outline-none transition placeholder:text-slate-400 focus:border-leaf-500 focus:ring-4 focus:ring-leaf-100" placeholder="삭제할 때만 입력" />
+        </label>
+        <button id="apply-class-code-button" type="button" class="inline-flex items-center justify-center rounded-lg border border-leaf-300 bg-white px-4 py-3 text-base font-black text-leaf-800 transition hover:border-leaf-500 hover:bg-leaf-100 focus:outline-none focus:ring-4 focus:ring-leaf-200">
+          게시판 불러오기
+        </button>
+        <p id="board-storage-status" class="text-sm font-bold leading-6 text-leaf-700 lg:col-span-3" role="status" aria-live="polite"></p>
+      </form>
+
       <div id="empty-board" class="mt-6 rounded-lg border-2 border-dashed border-leaf-200 bg-leaf-50 p-8 text-center">
         <p class="text-xl font-black text-leaf-950">아직 발행된 뉴스가 없습니다.</p>
         <p class="mt-2 text-base text-leaf-700">첫 번째 환경 리포터가 되어 학급 게시판을 채워 주세요.</p>
@@ -257,11 +272,29 @@
   </main>
 
   <footer class="mx-auto max-w-7xl px-4 pb-8 text-center text-sm font-bold text-leaf-700 sm:px-6 lg:px-8">
-    새로고침해도 브라우저 localStorage에 발행한 뉴스가 남아 있습니다.
+    Firebase 설정을 연결하면 같은 학급 코드의 게시판이 여러 기기에서 함께 보입니다.
   </footer>
 
   <script>
-    const STORAGE_KEY = "green-class-environment-news-v1";
+    window.ECO_NEWS_FIREBASE_CONFIG = {
+      apiKey: "AIzaSyB-6i6-7bcBMJLBv5BfmDQeld2O0Yxn5bI",
+      authDomain: "digital-eco-newletter-wbmaker2.firebaseapp.com",
+      projectId: "digital-eco-newletter-wbmaker2",
+      storageBucket: "digital-eco-newletter-wbmaker2.firebasestorage.app",
+      messagingSenderId: "210688076673",
+      appId: "1:210688076673:web:fb29a5b9eff80dffcd5680"
+    };
+
+    window.ECO_NEWS_BOARD_OPTIONS = {
+      defaultClassCode: "green-earth-class",
+      teacherDeleteCode: ""
+    };
+  </script>
+
+  <script type="module">
+    const LEGACY_STORAGE_KEY = "green-class-environment-news-v1";
+    const STORAGE_KEY_PREFIX = "green-class-environment-news-v2";
+    const CLASS_CODE_STORAGE_KEY = "green-class-environment-class-code";
 
     const imagePresets = {
       forest: {
@@ -455,6 +488,11 @@
     const boardList = document.getElementById("board-list");
     const emptyBoard = document.getElementById("empty-board");
     const boardCount = document.getElementById("board-count");
+    const boardControlsForm = document.getElementById("board-controls-form");
+    const classCodeInput = document.getElementById("class-code-input");
+    const teacherDeleteCodeInput = document.getElementById("teacher-delete-code-input");
+    const applyClassCodeButton = document.getElementById("apply-class-code-button");
+    const boardStorageStatus = document.getElementById("board-storage-status");
 
     const preview = {
       date: document.getElementById("preview-date"),
@@ -497,16 +535,195 @@
       }).format(value);
     }
 
-    function loadPosts() {
+    function normalizeClassCode(value) {
+      const fallback = window.ECO_NEWS_BOARD_OPTIONS?.defaultClassCode || "green-earth-class";
+      const normalized = String(value || fallback)
+        .trim()
+        .toLowerCase()
+        .replace(/[^0-9a-z가-힣_-]+/g, "-")
+        .replace(/^-+|-+$/g, "")
+        .slice(0, 40);
+      return normalized || fallback;
+    }
+
+    function getSavedClassCode() {
+      return normalizeClassCode(localStorage.getItem(CLASS_CODE_STORAGE_KEY));
+    }
+
+    function saveClassCode(classCode) {
+      localStorage.setItem(CLASS_CODE_STORAGE_KEY, normalizeClassCode(classCode));
+    }
+
+    function localStorageKey(classCode) {
+      return `${STORAGE_KEY_PREFIX}:${normalizeClassCode(classCode)}`;
+    }
+
+    function readPostsFromStorage(key) {
       try {
-        return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+        return JSON.parse(localStorage.getItem(key)) || [];
       } catch {
         return [];
       }
     }
 
-    function savePosts(posts) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(posts));
+    function loadLocalPosts(classCode) {
+      const normalizedClassCode = normalizeClassCode(classCode);
+      const posts = readPostsFromStorage(localStorageKey(normalizedClassCode));
+      if (posts.length > 0) return posts;
+
+      const defaultClassCode = normalizeClassCode(window.ECO_NEWS_BOARD_OPTIONS?.defaultClassCode);
+      const legacyPosts = normalizedClassCode === defaultClassCode ? readPostsFromStorage(LEGACY_STORAGE_KEY) : [];
+      if (legacyPosts.length === 0) return [];
+
+      const migratedPosts = legacyPosts.map((post) => ({
+        ...post,
+        classCode: normalizedClassCode,
+        createdAtClient: post.createdAtClient || post.createdAt || new Date().toISOString()
+      }));
+      saveLocalPosts(normalizedClassCode, migratedPosts);
+      return migratedPosts;
+    }
+
+    function saveLocalPosts(classCode, posts) {
+      localStorage.setItem(localStorageKey(classCode), JSON.stringify(posts));
+    }
+
+    function isFirebaseConfigured(config) {
+      return Boolean(config?.apiKey && config?.projectId && config?.appId);
+    }
+
+    function getPostDate(post) {
+      const raw = post.createdAt || post.createdAtClient;
+      if (!raw) return new Date();
+      if (typeof raw === "string") return new Date(raw);
+      if (typeof raw.toDate === "function") return raw.toDate();
+      if (typeof raw.seconds === "number") return new Date(raw.seconds * 1000);
+      return new Date(raw);
+    }
+
+    function sanitizePost(post) {
+      return {
+        id: String(post.id || ""),
+        themeId: String(post.themeId || "acid-rain").slice(0, 40),
+        themeTitle: String(post.themeTitle || "환경 뉴스").slice(0, 80),
+        themeShort: String(post.themeShort || "환경 뉴스").slice(0, 40),
+        themeColor: String(post.themeColor || "green").slice(0, 20),
+        headline: String(post.headline || "").trim().slice(0, 72),
+        reporter: String(post.reporter || "").trim().slice(0, 24),
+        body: String(post.body || "").trim().slice(0, 1200),
+        imageUrl: String(post.imageUrl || "").slice(0, 20000),
+        caption: String(post.caption || "환경 뉴스 이미지").slice(0, 120),
+        classCode: normalizeClassCode(post.classCode),
+        createdAt: post.createdAt || post.createdAtClient || new Date().toISOString(),
+        createdAtClient: post.createdAtClient || new Date().toISOString()
+      };
+    }
+
+    function sortPosts(posts) {
+      return [...posts].sort((a, b) => getPostDate(b) - getPostDate(a));
+    }
+
+    function createLocalBoardStore() {
+      const listeners = new Set();
+      let classCode = getSavedClassCode();
+
+      function emit() {
+        const posts = sortPosts(loadLocalPosts(classCode).map(sanitizePost));
+        listeners.forEach((listener) => listener(posts));
+      }
+
+      return {
+        mode: "local",
+        async subscribe(nextClassCode, onPosts) {
+          classCode = normalizeClassCode(nextClassCode);
+          listeners.add(onPosts);
+          emit();
+          return () => listeners.delete(onPosts);
+        },
+        async add(post, nextClassCode) {
+          classCode = normalizeClassCode(nextClassCode);
+          const posts = loadLocalPosts(classCode);
+          posts.push(sanitizePost({ ...post, classCode }));
+          saveLocalPosts(classCode, posts);
+          emit();
+        },
+        async delete(id, nextClassCode) {
+          classCode = normalizeClassCode(nextClassCode);
+          const posts = loadLocalPosts(classCode).filter((post) => post.id !== id);
+          saveLocalPosts(classCode, posts);
+          emit();
+        }
+      };
+    }
+
+    async function createFirestoreBoardStore(config) {
+      const [{ initializeApp }, firestore] = await Promise.all([
+        import("https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js"),
+        import("https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js")
+      ]);
+      const {
+        getFirestore,
+        collection,
+        addDoc,
+        deleteDoc,
+        doc,
+        query,
+        orderBy,
+        limit,
+        onSnapshot,
+        serverTimestamp
+      } = firestore;
+      const app = initializeApp(config);
+      const db = getFirestore(app);
+
+      function reportsCollection(classCode) {
+        return collection(db, "classes", normalizeClassCode(classCode), "reports");
+      }
+
+      return {
+        mode: "firebase",
+        async subscribe(classCode, onPosts, onError) {
+          const reportsQuery = query(reportsCollection(classCode), orderBy("createdAt", "desc"), limit(80));
+          return onSnapshot(
+            reportsQuery,
+            (snapshot) => {
+              const posts = snapshot.docs.map((documentSnapshot) =>
+                sanitizePost({
+                  id: documentSnapshot.id,
+                  ...documentSnapshot.data(),
+                  classCode
+                })
+              );
+              onPosts(posts);
+            },
+            onError
+          );
+        },
+        async add(post, classCode) {
+          const sanitized = sanitizePost({ ...post, classCode });
+          const { id, ...reportData } = sanitized;
+          await addDoc(reportsCollection(classCode), {
+            ...reportData,
+            clientId: id,
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp()
+          });
+        },
+        async delete(id, classCode) {
+          await deleteDoc(doc(db, "classes", normalizeClassCode(classCode), "reports", id));
+        }
+      };
+    }
+
+    function setStatus(text, tone = "default") {
+      const toneClasses = {
+        default: "text-leaf-700",
+        success: "text-leaf-800",
+        warn: "text-amber-800",
+        error: "text-red-700"
+      };
+      boardStorageStatus.className = `text-sm font-bold leading-6 ${toneClasses[tone] || toneClasses.default} lg:col-span-3`;
+      boardStorageStatus.textContent = text;
     }
 
     function renderThemeOptions() {
@@ -556,6 +773,7 @@
 
     function createPostFromForm() {
       const selectedTheme = getSelectedTheme();
+      const now = new Date().toISOString();
       return {
         id: window.crypto?.randomUUID ? window.crypto.randomUUID() : String(Date.now()),
         themeId: selectedTheme.id,
@@ -567,17 +785,23 @@
         body: bodyInput.value.trim(),
         imageUrl: getSafeImageUrl(imageInput.value, selectedTheme.preset),
         caption: imagePresets[selectedTheme.preset].caption,
-        createdAt: new Date().toISOString()
+        classCode: activeClassCode,
+        createdAt: now,
+        createdAtClient: now
       };
     }
 
-    function renderBoard() {
-      const posts = loadPosts().sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-      boardList.innerHTML = "";
-      emptyBoard.classList.toggle("hidden", posts.length > 0);
-      boardCount.textContent = `게시글 ${posts.length}개`;
+    let activeClassCode = getSavedClassCode();
+    let boardStore = createLocalBoardStore();
+    let unsubscribeBoard = () => {};
 
-      posts.forEach((post) => {
+    function renderBoard(posts = []) {
+      const sortedPosts = sortPosts(posts.map(sanitizePost));
+      boardList.innerHTML = "";
+      emptyBoard.classList.toggle("hidden", sortedPosts.length > 0);
+      boardCount.textContent = `게시글 ${sortedPosts.length}개`;
+
+      sortedPosts.forEach((post) => {
         const article = document.createElement("article");
         article.className = "board-card mb-4 overflow-hidden rounded-lg border border-leaf-200 bg-white shadow-soft";
         const image = document.createElement("img");
@@ -595,14 +819,14 @@
             <p class="mt-1 text-sm font-bold text-leaf-700"></p>
             <p class="mt-3 line-clamp-5 whitespace-pre-wrap text-sm leading-6 text-slate-700"></p>
             <button type="button" class="delete-button mt-4 inline-flex w-full items-center justify-center rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm font-black text-red-700 transition hover:bg-red-100 focus:outline-none focus:ring-4 focus:ring-red-100">
-              삭제
+              교사용 삭제
             </button>
           </div>
         `;
 
         article.prepend(image);
         article.querySelector(".theme-label").textContent = post.themeShort || "환경 뉴스";
-        article.querySelector(".post-date").textContent = formatDate(new Date(post.createdAt));
+        article.querySelector(".post-date").textContent = formatDate(getPostDate(post));
         article.querySelector("h3").textContent = post.headline;
         article.querySelector("p:nth-of-type(1)").textContent = `${post.reporter} 작성`;
         article.querySelector("p:nth-of-type(2)").textContent = post.body;
@@ -611,7 +835,28 @@
       });
     }
 
-    function publishPost(event) {
+    async function connectBoard(nextClassCode = activeClassCode) {
+      activeClassCode = normalizeClassCode(nextClassCode);
+      classCodeInput.value = activeClassCode;
+      saveClassCode(activeClassCode);
+      unsubscribeBoard();
+      setStatus("게시판을 불러오는 중입니다...");
+
+      unsubscribeBoard = await boardStore.subscribe(
+        activeClassCode,
+        (posts) => {
+          renderBoard(posts);
+          const modeText = boardStore.mode === "firebase" ? "Firebase 공유 게시판" : "브라우저 데모 게시판";
+          setStatus(`${modeText} · 학급 코드 ${activeClassCode}`, boardStore.mode === "firebase" ? "success" : "warn");
+        },
+        (error) => {
+          renderBoard([]);
+          setStatus(`Firebase 게시판을 불러오지 못했습니다: ${error.message}`, "error");
+        }
+      );
+    }
+
+    async function publishPost(event) {
       event.preventDefault();
       if (!form.checkValidity()) {
         form.reportValidity();
@@ -620,29 +865,64 @@
         return;
       }
 
-      const posts = loadPosts();
       const post = createPostFromForm();
-      posts.push(post);
-      savePosts(posts);
-      renderBoard();
-      message.className = "mt-4 min-h-7 rounded-lg bg-leaf-50 px-3 py-2 text-base font-bold text-leaf-800";
-      message.textContent = "학급 게시판에 뉴스가 발행되었습니다.";
-      const boardTop = document.getElementById("class-board").getBoundingClientRect().top + window.scrollY - 18;
-      window.scrollTo({ top: boardTop, behavior: "smooth" });
+      try {
+        await boardStore.add(post, activeClassCode);
+        message.className = "mt-4 min-h-7 rounded-lg bg-leaf-50 px-3 py-2 text-base font-bold text-leaf-800";
+        message.textContent = boardStore.mode === "firebase"
+          ? "학급 공유 게시판에 뉴스가 발행되었습니다."
+          : "브라우저 데모 게시판에 뉴스가 발행되었습니다.";
+        const boardTop = document.getElementById("class-board").getBoundingClientRect().top + window.scrollY - 18;
+        window.scrollTo({ top: boardTop, behavior: "smooth" });
+      } catch (error) {
+        message.className = "mt-4 min-h-7 rounded-lg bg-red-50 px-3 py-2 text-base font-bold text-red-700";
+        message.textContent = `뉴스를 발행하지 못했습니다: ${error.message}`;
+      }
     }
 
-    function deletePost(id) {
-      const nextPosts = loadPosts().filter((post) => post.id !== id);
-      savePosts(nextPosts);
-      renderBoard();
-      message.className = "mt-4 min-h-7 rounded-lg bg-slate-50 px-3 py-2 text-base font-bold text-slate-700";
-      message.textContent = "게시판에서 뉴스가 삭제되었습니다.";
+    function hasTeacherDeleteAccess() {
+      const requiredCode = window.ECO_NEWS_BOARD_OPTIONS?.teacherDeleteCode || "";
+      if (!requiredCode) return true;
+      return teacherDeleteCodeInput.value.trim() === requiredCode;
+    }
+
+    async function deletePost(id) {
+      if (!hasTeacherDeleteAccess()) {
+        message.className = "mt-4 min-h-7 rounded-lg bg-amber-50 px-3 py-2 text-base font-bold text-amber-800";
+        message.textContent = "교사용 삭제 코드를 확인해 주세요.";
+        return;
+      }
+
+      try {
+        await boardStore.delete(id, activeClassCode);
+        message.className = "mt-4 min-h-7 rounded-lg bg-slate-50 px-3 py-2 text-base font-bold text-slate-700";
+        message.textContent = "게시판에서 뉴스가 삭제되었습니다.";
+      } catch (error) {
+        message.className = "mt-4 min-h-7 rounded-lg bg-red-50 px-3 py-2 text-base font-bold text-red-700";
+        message.textContent = `뉴스를 삭제하지 못했습니다: ${error.message}`;
+      }
     }
 
     function wireEvents() {
       form.addEventListener("input", updatePreview);
       form.addEventListener("change", updatePreview);
       form.addEventListener("submit", publishPost);
+
+      applyClassCodeButton.addEventListener("click", () => {
+        connectBoard(classCodeInput.value);
+      });
+
+      boardControlsForm.addEventListener("submit", (event) => {
+        event.preventDefault();
+        connectBoard(classCodeInput.value);
+      });
+
+      classCodeInput.addEventListener("keydown", (event) => {
+        if (event.key === "Enter") {
+          event.preventDefault();
+          connectBoard(classCodeInput.value);
+        }
+      });
 
       presetList.addEventListener("click", (event) => {
         const button = event.target.closest("[data-preset]");
@@ -661,11 +941,29 @@
       });
     }
 
+    async function initializeBoardStore() {
+      const firebaseConfig = window.ECO_NEWS_FIREBASE_CONFIG || {};
+      if (!isFirebaseConfigured(firebaseConfig)) {
+        boardStore = createLocalBoardStore();
+        await connectBoard(activeClassCode);
+        return;
+      }
+
+      try {
+        boardStore = await createFirestoreBoardStore(firebaseConfig);
+        await connectBoard(activeClassCode);
+      } catch (error) {
+        boardStore = createLocalBoardStore();
+        setStatus(`Firebase 연결 실패로 브라우저 데모 모드로 전환했습니다: ${error.message}`, "error");
+        await connectBoard(activeClassCode);
+      }
+    }
+
     renderThemeOptions();
     renderPresetButtons();
     wireEvents();
     updatePreview();
-    renderBoard();
+    await initializeBoardStore();
   </script>
 </body>
 </html>

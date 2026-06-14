@@ -1,0 +1,73 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function hasValidReportShape(classCode) {
+      return request.resource.data.keys().hasAll([
+        "themeId",
+        "themeTitle",
+        "themeShort",
+        "themeColor",
+        "headline",
+        "reporter",
+        "body",
+        "imageUrl",
+        "caption",
+        "classCode",
+        "clientId",
+        "createdAt",
+        "createdAtClient",
+        "updatedAt"
+      ]) &&
+      request.resource.data.keys().hasOnly([
+        "themeId",
+        "themeTitle",
+        "themeShort",
+        "themeColor",
+        "headline",
+        "reporter",
+        "body",
+        "imageUrl",
+        "caption",
+        "classCode",
+        "clientId",
+        "createdAt",
+        "createdAtClient",
+        "updatedAt"
+      ]) &&
+      request.resource.data.classCode == classCode &&
+      request.resource.data.themeId is string &&
+      request.resource.data.themeId.size() <= 40 &&
+      request.resource.data.themeTitle is string &&
+      request.resource.data.themeTitle.size() <= 80 &&
+      request.resource.data.themeShort is string &&
+      request.resource.data.themeShort.size() <= 40 &&
+      request.resource.data.themeColor in ["green", "cyan", "blue", "amber"] &&
+      request.resource.data.headline is string &&
+      request.resource.data.headline.size() > 0 &&
+      request.resource.data.headline.size() <= 72 &&
+      request.resource.data.reporter is string &&
+      request.resource.data.reporter.size() > 0 &&
+      request.resource.data.reporter.size() <= 24 &&
+      request.resource.data.body is string &&
+      request.resource.data.body.size() > 0 &&
+      request.resource.data.body.size() <= 1200 &&
+      request.resource.data.imageUrl is string &&
+      request.resource.data.imageUrl.size() <= 20000 &&
+      request.resource.data.caption is string &&
+      request.resource.data.caption.size() <= 120 &&
+      request.resource.data.clientId is string &&
+      request.resource.data.clientId.size() <= 80 &&
+      request.resource.data.createdAt is timestamp &&
+      request.resource.data.createdAtClient is string &&
+      request.resource.data.updatedAt is timestamp;
+    }
+
+    match /classes/{classCode}/reports/{reportId} {
+      allow read: if true;
+      allow create: if hasValidReportShape(classCode);
+      allow update: if false;
+      allow delete: if true;
+    }
+  }
+}
